@@ -4,9 +4,9 @@ const fs = require('fs');
 const HEADLESS_MODE = true;
 
 async function searchPosts(page, query) {
-  console.log(`[1] Searching for: "${query}" (sorted by top)`);
+  console.log(`[1] Searching for: "${query}" (sorted by relevance)`);
   const encodedQuery = encodeURIComponent(query);
-  const searchUrl = `https://www.reddit.com/search/?q=${encodedQuery}&sort=top`;
+  const searchUrl = `https://www.reddit.com/search/?q=${encodedQuery}&sort=relevance`;
   
   await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
   
@@ -140,15 +140,9 @@ async function extractComments(page, postId) {
       processComment(tlc, true);
       
       // Level 1 replies
-      const level1Replies = Array.from(tlc.querySelectorAll('shreddit-comment[depth="1"]'));
+      const level1Replies = Array.from(tlc.querySelectorAll('shreddit-comment[depth="1"]')).slice(0, 7);
       for (const l1 of level1Replies) {
         processComment(l1, false);
-        
-        // Level 2 replies
-        const level2Replies = Array.from(l1.querySelectorAll('shreddit-comment[depth="2"]'));
-        for (const l2 of level2Replies) {
-          processComment(l2, false);
-        }
       }
     }
     
@@ -159,7 +153,27 @@ async function extractComments(page, postId) {
 }
 
 async function main() {
-  const query = "programming"; // hardcoded for test
+  const args = process.argv.slice(2);
+  let query = args[0];
+  
+  if (!query) {
+    const readline = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    query = await new Promise(resolve => {
+      readline.question('Enter search query: ', (answer) => {
+        readline.close();
+        resolve(answer.trim());
+      });
+    });
+    
+    if (!query) {
+      console.error("No query provided. Exiting.");
+      process.exit(1);
+    }
+  }
   console.log(`Starting run for query: ${query}`);
   
   const browser = await chromium.launch({ headless: HEADLESS_MODE });
@@ -186,8 +200,31 @@ async function main() {
       }
     }
     
-    console.log(JSON.stringify(finalResults, null, 2));
-    
+    // Save the output to reddit-results.json
+    const outputPath = 'reddit-results.json';
+    fs.writeFileSync(outputPath, JSON.stringify(finalResults, null, 2), 'utf8');
+    console.log(`\nSuccessfully scraped ${finalResults.length} posts and saved results to ${outputPath}`);
+
+    // ── Auto-run claim extraction ──────────────────────────────────────────
+    // Spawn claim-extractor.js as a child process, streaming its output
+    // directly to this terminal (inherit stdio) so you can watch it live.
+    console.log('\n=============================================================');
+    console.log(' STARTING CLAIM EXTRACTION PIPELINE...');
+    console.log('=============================================================\n');
+
+    const { spawnSync } = require('child_process');
+    const extractorPath = require('path').join(__dirname, 'claim-extractor.js');
+    const result = spawnSync('node', [extractorPath, outputPath], {
+      stdio: 'inherit',   // streams stdout + stderr directly to this terminal
+      cwd: require('path').dirname(__dirname),  // run from project root (where .env lives)
+    });
+
+    if (result.error) {
+      console.error('\nFailed to launch claim-extractor.js:', result.error.message);
+    } else if (result.status !== 0) {
+      console.error(`\nClaim extractor exited with code ${result.status}`);
+    }
+
   } catch (error) {
     console.error("An error occurred during scraping:", error);
   } finally {

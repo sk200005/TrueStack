@@ -268,3 +268,34 @@ CREATE INDEX idx_transcript_chunks_video_chunk
 -- video_id predicate efficient).
 CREATE INDEX idx_transcript_chunks_video_wordcount
     ON transcript_chunks(video_id, word_count);
+
+
+-- ==========================================
+-- CLAIM EXTRACTION SCHEMA
+-- ==========================================
+
+-- Stores structured claims extracted from any platform's comments/transcripts
+-- by the LLM pipeline. source_platform distinguishes reddit / youtube / etc.
+-- raw_llm_response captures the full batch array for debugging and audit.
+CREATE TABLE extracted_claims (
+    id                 SERIAL PRIMARY KEY,
+    claim_text         TEXT NOT NULL,
+    entities           JSONB NOT NULL,
+    claim_type         TEXT NOT NULL,
+    direction          TEXT,                          -- "positive" | "negative" | "neutral" | NULL
+    confidence         TEXT NOT NULL,                 -- "high" | "medium" | "low"
+    is_sincere         BOOLEAN NOT NULL DEFAULT TRUE,
+    source_comment_id  TEXT NOT NULL,                 -- e.g. "t1_ipxtyld" (Reddit) or YouTube comment id
+    source_platform    TEXT NOT NULL,                 -- "reddit" | "youtube" | ...
+    extracted_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    raw_llm_response   JSONB                          -- full batch array from LLM for this comment's batch
+);
+
+-- Look up all claims extracted from a specific comment.
+CREATE INDEX idx_extracted_claims_source_comment_id
+    ON extracted_claims(source_comment_id);
+
+-- Filter / aggregate claims by type (e.g. "effectiveness", "warning").
+CREATE INDEX idx_extracted_claims_claim_type
+    ON extracted_claims(claim_type);
+
