@@ -1,0 +1,12 @@
+{
+  "name": "amazon-flipkart-review-poc",
+  "version": "1.0.0",
+  "description": "POC: Amazon India & Flipkart review intelligence scraper using Playwright",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "playwright": "^1.42.1"
+  }
+}

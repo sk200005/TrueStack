@@ -1,0 +1,151 @@
+{
+  "query": "best mobile phones under 15000",
+  "source": "Amazon India",
+  "scrapedAt": "2026-07-09T18:38:49.883Z",
+  "products": [
+    {
+      "source": "Amazon",
+      "productName": "iQOO Z10 Lite 5G (Titanium Blue 2026, 4GB RAM, 64GB Storage)",
+      "price": "",
+      "rating": "4.2 out of 5",
+      "totalRatings": "7,777 global ratings",
+      "image": "https://m.media-amazon.com/images/I/613RKG4NCgL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/iQOO-Lite-Titanium-Blue-Storage/dp/B0H1JG89ZB",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "Samsung Galaxy M06 5G Mobile (Blazing Black, 6GB RAM, 128GB Storage) | MediaTek Dimensity 6300 | AnTuTu 623K+ | 12 5G Bands | 25W Fast Charging | 4 Gen OS Upgrades | 50MP Camera | Without Charger",
+      "price": "",
+      "rating": "4.1 out of 5",
+      "totalRatings": "8,959 global ratings",
+      "image": "https://m.media-amazon.com/images/I/71K8ghTEGlL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/Samsung-MediaTek-Dimensity-Charging-Upgrades/dp/B0G827QJ7S",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "REDMI A7 Pro 5G (Black, 4GB RAM,128GB Storage) | Segment's Fastest Processor | Segment's Largest Battery | Segment's Largest & Smoothest 6.9in 120Hz Display",
+      "price": "₹13,999",
+      "rating": "3.3 out of 5",
+      "totalRatings": "1,029 global ratings",
+      "image": "https://m.media-amazon.com/images/I/71AjkPyeFiL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/REDMI-A7-Pro-5G-Processor/dp/B0GS5M4VMH",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "Samsung Galaxy F06 5G, Lit Voilet (6GB, 128GB)",
+      "price": "₹14,982",
+      "rating": "4.1 out of 5",
+      "totalRatings": "189 global ratings",
+      "image": "https://m.media-amazon.com/images/I/51G4GBygGCL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/Samsung-Galaxy-F06-5G-Voilet/dp/B0F8ZVRLZB",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "REDMI A7 Pro 5G (Mist Blue, 4GB RAM,128GB Storage) | Segment's Fastest Processor | Segment's Largest Battery | Segment's Largest & Smoothest 6.9in 120Hz Display",
+      "price": "₹13,999",
+      "rating": "3.3 out of 5",
+      "totalRatings": "1,029 global ratings",
+      "image": "https://m.media-amazon.com/images/I/71eQsL8sqcL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/Storage-Segments-Fastest-Processor-Smoothest/dp/B0GS5Y6BD3",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "realme NARZO 80 Lite 4G (Beach Gold 2026, 4GB+64GB) | 6300mAh Segment's Biggest Battery | 7.94mm Slim Design | 300% Ultra Volume | Pulse Light: 9 Colors, 5 Glow Modes | Ai Assist",
+      "price": "₹11,999",
+      "rating": "4.1 out of 5",
+      "totalRatings": "3,171 global ratings",
+      "image": "https://m.media-amazon.com/images/I/71RiAp+yw5L._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/realme-6300mAh-Segments-Biggest-Battery/dp/B0H1B6WTN3",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "Samsung Galaxy M06 5G Mobile (Sage Green, 4GB RAM, 128GB Storage) | MediaTek Dimensity 6300 | AnTuTu 623K+ | 12 5G Bands | 25W Fast Charging | 4 Gen OS Upgrades | 50MP Camera | Without Charger",
+      "price": "₹13,999",
+      "rating": "4.1 out of 5",
+      "totalRatings": "8,959 global ratings",
+      "image": "https://m.media-amazon.com/images/I/71vibvcdAlL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/Samsung-MediaTek-Dimensity-Charging-Upgrades/dp/B0G822MS12",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    },
+    {
+      "source": "Amazon",
+      "productName": "realme narzo 100 Lite 5G (Thunder Black,4GB+64GB) | 7000mAh Titan Battery | 4 Years, Zero Lag | 144 Hz Ultra Smooth Display | 6 nm Octa-core 5G Chipset | Color Pop Design | VC Cooling",
+      "price": "₹14,999",
+      "rating": "4.1 out of 5",
+      "totalRatings": "126 global ratings",
+      "image": "https://m.media-amazon.com/images/I/81VLfISX7NL._AC_UY218_.jpg",
+      "productUrl": "https://www.amazon.in/realme-Thunder-7000mAh-Battery-Octa-core/dp/B0GTRM9NQ7",
+      "reviewSummary": "",
+      "ratingHistogram": {
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "featureRatings": []
+    }
+  ]
+}
