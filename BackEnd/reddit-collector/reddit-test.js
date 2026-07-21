@@ -205,6 +205,15 @@ async function main() {
     fs.writeFileSync(outputPath, JSON.stringify(finalResults, null, 2), 'utf8');
     console.log(`\nSuccessfully scraped ${finalResults.length} posts and saved results to ${outputPath}`);
 
+    // Save the output to PostgreSQL
+    try {
+      const { saveToPostgres } = require('./db-helper.js');
+      console.log('Saving to PostgreSQL database...');
+      await saveToPostgres(finalResults, query);
+    } catch (dbErr) {
+      console.error('Could not save to Postgres:', dbErr.message);
+    }
+
     // ── Auto-run claim extraction ──────────────────────────────────────────
     // Spawn claim-extractor.js as a child process, streaming its output
     // directly to this terminal (inherit stdio) so you can watch it live.
