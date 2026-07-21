@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
-app.use(express.json());
+app.use(express.json());     //Converts incoming JSON into a JavaScript object.
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'backend-node' }));
@@ -32,7 +32,7 @@ app.use('/api/reports', reportRoutes);
 app.use(errorHandler);
 
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, () => {                                                      // Starts listening for incoming requests.
   console.log(`[backend-node] Server running on http://localhost:${PORT}`);
   // Start the in-memory research worker after the server is bound
   startWorker();
