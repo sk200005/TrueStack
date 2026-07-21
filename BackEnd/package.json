@@ -1,0 +1,23 @@
+{
+  "name": "research-backend",
+  "version": "1.0.0",
+  "description": "Backend for Re-Search Multi-Source Public Opinion Research & Verification Platform",
+  "scripts": {
+    "reddit:scrape": "node reddit-collector/reddit-test.js",
+    "reddit:extract": "node reddit-collector/claim-extractor.js",
+    "youtube:scrape": "node youtube-collector/main.js",
+    "amazon:scrape": "node amazon-flipkart-poc/main.js"
+  },
+  "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
+    "franc": "^6.2.0",
+    "groq-sdk": "^0.7.0",
+    "pg": "^8.11.0",
+    "playwright": "^1.42.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "youtube-transcript": "^1.2.1"
+  }
+}
