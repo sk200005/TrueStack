@@ -3,11 +3,15 @@
 /**
  * researchWorker.js — In-process job queue and worker.
  *
- * WHY IN-MEMORY (not BullMQ + Redis):
- *   Redis is not required to be running locally for development.
- *   This queue lives in the same Node.js process as the Express server.
- *   For production scale-out, swap this module for the BullMQ implementation
- *   in researchQueue.js — the interface (add, onComplete, onFail) is the same.
+ * ADR: Why in-memory instead of BullMQ + Redis for v1?
+ *   - The orchestration logic (and this queue) is slated to be migrated 
+ *     to the Python FastAPI service in the next phase.
+ *   - Introducing BullMQ and requiring a Redis deployment now would be 
+ *     over-investing in throwaway infrastructure.
+ *   - While this means jobs are lost if the Node process restarts, the
+ *     client (or user) can easily retry failed/lost jobs using the
+ *     existing retry endpoint, which gracefully resumes via checkpoints.
+ *   - We accept this temporary limitation for v1 to accelerate the Python migration.
  *
  * DESIGN:
  *   - Jobs are stored in a simple array queue (FIFO).
@@ -159,5 +163,18 @@ function startWorker() {
 function getQueueLength() {
   return queue.length;
 }
+
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+
+process.on('SIGTERM', () => {
+  if (isProcessing || queue.length > 0) {
+    logger.warn({
+      source: 'worker',
+      message: `SIGTERM received. Worker is going down with ${queue.length} jobs in queue and ${isProcessing ? '1' : '0'} job in-flight. These will need to be retried manually.`,
+      queueLength: queue.length,
+      isProcessing
+    });
+  }
+});
 
 module.exports = { startWorker, addJob, jobEvents, getQueueLength };

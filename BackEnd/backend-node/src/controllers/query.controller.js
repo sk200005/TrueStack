@@ -164,13 +164,20 @@ async function retryJob(req, res, next) {
       [jobId]
     );
 
+    // Determine which sources to actually retry.
+    // If some sources failed, we only retry those. Otherwise (e.g. global worker crash),
+    // we fall back to retrying all originally requested sources.
+    const sourcesToRetry = (job.sources_failed && job.sources_failed.length > 0)
+      ? job.sources_failed
+      : job.sources_requested;
+
     // Re-enqueue (the checkpoint in job_checkpoints survives the reset,
     // so the scraper will resume from where it left off)
     addJob({
       jobId,
       userId,
       queryText: job.query_text,
-      sources: job.sources_requested,
+      sources: sourcesToRetry,
     });
 
     return res.status(202).json({

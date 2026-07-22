@@ -1,4 +1,8 @@
-'use strict';
+'use strict';     //
+                  // It prevents common mistakes such as
+                  // - using undeclared variables
+                  // - assigning values incorrectly
+                  // - other unsafe JavaScript behavior
 
 /**
  * checkpoint.js — Per-job scrape progress persistence.
@@ -26,7 +30,8 @@
  */
 
 require('dotenv').config();
-const { Pool } = require('pg');
+const { Pool } = require('pg');      // A Pool manages multiple database connections instead of creating a new connection every time. 
+                                      // This is more efficient for applications that make many database requests.
 
 // Reuse the same PG config pattern as db-helper.js
 const db = new Pool({
