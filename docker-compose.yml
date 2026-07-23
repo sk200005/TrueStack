@@ -1,0 +1,44 @@
+# Re-Search Platform — Docker Compose
+# Provides shared infrastructure services for local development.
+
+services:
+  # ── PostgreSQL + pgvector ───────────────────────────────────────────────
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: research-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: swayam
+      POSTGRES_PASSWORD: "PGSQLpw#1"
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Seed the schema on first run
+      - ./BackEnd/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swayam -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── Python FastAPI Service ──────────────────────────────────────────────
+  backend-python:
+    build:
+      context: ./BackEnd/backend-python
+      dockerfile: Dockerfile
+    container_name: research-backend-python
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./BackEnd/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Uncomment once Dockerfile is ready:
+    # command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+volumes:
+  pgdata:

@@ -10,8 +10,9 @@ const authRoutes = require('./routes/auth.routes');
 const queryRoutes = require('./routes/query.routes');
 const reportRoutes = require('./routes/report.routes');
 
-// In-memory job worker — starts processing the queue as soon as the server boots
-const { startWorker } = require('./workers/researchWorker');
+// @deprecated — In-memory job worker replaced by Python FastAPI service (backend-python).
+// Retained for emergency rollback. To re-enable, uncomment and update query.controller.js.
+// const { startWorker } = require('./workers/researchWorker');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,8 +35,8 @@ app.use(errorHandler);
 // ── Start ──────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {                                                      // Starts listening for incoming requests.
   console.log(`[backend-node] Server running on http://localhost:${PORT}`);
-  // Start the in-memory research worker after the server is bound
-  startWorker();
+  console.log(`[backend-node] Jobs are now forwarded to Python service at ${process.env.PYTHON_SERVICE_URL || 'http://localhost:8000'}`);
+  // @deprecated — startWorker() no longer called. See researchWorker.js.
 });
 
 module.exports = app;

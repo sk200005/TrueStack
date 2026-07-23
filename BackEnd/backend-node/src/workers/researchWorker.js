@@ -1,6 +1,15 @@
 'use strict';
 
 /**
+ * @deprecated — Job execution now handled by backend-python (FastAPI + LangGraph).
+ * This module is retained for emergency rollback only.
+ *
+ * To rollback: in query.controller.js, uncomment the researchWorker import
+ * and switch submitQuery/retryJob back to calling addJob() instead of
+ * pythonServiceClient.submitJob().
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ *
  * researchWorker.js — In-process job queue and worker.
  *
  * ADR: Why in-memory instead of BullMQ + Redis for v1?

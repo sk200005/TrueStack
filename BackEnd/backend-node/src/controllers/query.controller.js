@@ -4,22 +4,30 @@
  * query.controller.js
  *
  * Handles research query lifecycle:
- *   POST /api/queries        — create job, enqueue via in-memory worker, return jobId immediately
+ *   POST /api/queries        — create job, submit to Python FastAPI service
  *   GET  /api/queries/:id/status  — poll DB for current job status
- *   GET  /api/queries/:id/stream  — SSE: receive live progress events from the worker
- *   POST /api/queries/:id/retry   — re-enqueue a failed job from its last checkpoint
+ *   GET  /api/queries/:id/stream  — SSE: relay live progress events from Python service
+ *   POST /api/queries/:id/retry   — re-submit a failed job to Python service
  *
  * SSE Bridge:
- *   The in-memory worker (researchWorker.js) emits `job:<jobId>` events on `jobEvents`.
- *   This controller forwards those events to all connected SSE clients for that job.
+ *   This controller connects to the Python service's SSE endpoint and relays
+ *   events to the frontend client. Node acts as a pure proxy — no scraping logic.
+ *
+ * MIGRATION NOTE (July 2026):
+ *   Job execution moved from researchWorker.js (in-memory queue) to backend-python
+ *   (FastAPI + LangGraph). The in-memory worker is retained but unused — see
+ *   researchWorker.js for rollback instructions.
  */
 
 const db = require('../db/client');
-const { addJob, jobEvents } = require('../workers/researchWorker');
+const { submitJob, streamJobProgress: streamFromPython } = require('../services/pythonServiceClient');
+
+// @deprecated — retained for emergency rollback only. See researchWorker.js header.
+// const { addJob, jobEvents } = require('../workers/researchWorker');
 
 /**
  * POST /api/queries
- * Validates input, writes a `queries` row, enqueues the job, returns jobId immediately.
+ * Validates input, writes a `queries` row, submits to Python service, returns jobId immediately.
  */
 async function submitQuery(req, res, next) {
   try {
@@ -43,8 +51,26 @@ async function submitQuery(req, res, next) {
     );
     const jobId = rows[0].id;
 
-    // 2. Push job into the in-memory worker queue (non-blocking)
-    addJob({ jobId, userId, queryText: queryText.trim(), sources: sourcesRequested });
+    // 2. Submit job to Python FastAPI service (non-blocking from our perspective —
+    //    Python runs the LangGraph pipeline as a background task)
+    try {
+      await submitJob({
+        jobId,
+        userId,
+        queryText: queryText.trim(),
+        sources: sourcesRequested,
+      });
+    } catch (pythonErr) {
+      // If Python service is down, mark job as error immediately
+      await db.query(
+        "UPDATE queries SET status = 'error' WHERE id = $1",
+        [jobId]
+      );
+      return res.status(502).json({
+        error: 'Failed to reach Python pipeline service',
+        jobId,
+      });
+    }
 
     return res.status(202).json({
       jobId,
@@ -86,12 +112,12 @@ async function getJobStatus(req, res, next) {
 /**
  * GET /api/queries/:jobId/stream
  *
- * SSE endpoint — the client opens this connection once and receives live
- * progress events as the worker processes the job.
+ * SSE relay — connects to the Python service's SSE endpoint and forwards
+ * all events to the frontend client. Node adds no events of its own.
  *
- * Event format: { type, jobId, source?, status?, counts?, error?, timestamp }
+ * Event format (from Python): { type, jobId, source?, status?, counts?, error?, timestamp }
  *
- * The connection closes automatically when the worker emits type='done' or type='error'.
+ * The connection closes automatically when Python emits type='done' or type='error'.
  */
 function streamJobProgress(req, res) {
   const { jobId } = req.params;
@@ -105,34 +131,43 @@ function streamJobProgress(req, res) {
   });
   res.flushHeaders();
 
-  // Send initial connection acknowledgement
-  sendEvent(res, { type: 'connected', jobId });
+  // Connect to Python service's SSE stream and relay events
+  const pythonStream = streamFromPython(jobId);
 
-  // Forward worker events to this SSE client
-  const eventName = `job:${jobId}`;
-  function onWorkerEvent(event) {
+  pythonStream.on('event', (event) => {
     sendEvent(res, event);
     // Auto-close SSE stream when the job reaches a terminal state
     if (event.type === 'done' || event.type === 'error') {
       res.end();
-      jobEvents.off(eventName, onWorkerEvent);
     }
-  }
-  jobEvents.on(eventName, onWorkerEvent);
+  });
 
-  // Clean up listener when the client disconnects early
+  pythonStream.on('error', (err) => {
+    // Python service unreachable — send error event and close
+    sendEvent(res, {
+      type: 'error',
+      jobId,
+      status: 'error',
+      error: 'Lost connection to pipeline service',
+      timestamp: new Date().toISOString(),
+    });
+    res.end();
+  });
+
+  pythonStream.on('end', () => {
+    res.end();
+  });
+
+  // Clean up when the client disconnects early
   req.on('close', () => {
-    jobEvents.off(eventName, onWorkerEvent);
+    // pythonStream will be GC'd — no explicit cleanup needed for the EventEmitter
   });
 }
 
 /**
  * POST /api/queries/:jobId/retry
  *
- * Re-enqueues a failed job. The scraper's checkpoint persists the last
- * successfully processed item, so the retry continues from that point
- * rather than restarting from scratch.
- *
+ * Re-submits a failed job to the Python service.
  * Only jobs with status='error' can be retried.
  */
 async function retryJob(req, res, next) {
@@ -142,7 +177,7 @@ async function retryJob(req, res, next) {
 
     // Verify ownership and current status
     const { rows } = await db.query(
-      `SELECT id, query_text, status, sources_requested
+      `SELECT id, query_text, status, sources_requested, sources_failed
        FROM queries WHERE id = $1 AND user_id = $2`,
       [jobId, userId]
     );
@@ -164,21 +199,29 @@ async function retryJob(req, res, next) {
       [jobId]
     );
 
-    // Determine which sources to actually retry.
-    // If some sources failed, we only retry those. Otherwise (e.g. global worker crash),
-    // we fall back to retrying all originally requested sources.
+    // Determine which sources to actually retry
     const sourcesToRetry = (job.sources_failed && job.sources_failed.length > 0)
       ? job.sources_failed
       : job.sources_requested;
 
-    // Re-enqueue (the checkpoint in job_checkpoints survives the reset,
-    // so the scraper will resume from where it left off)
-    addJob({
-      jobId,
-      userId,
-      queryText: job.query_text,
-      sources: sourcesToRetry,
-    });
+    // Re-submit to Python service
+    try {
+      await submitJob({
+        jobId,
+        userId,
+        queryText: job.query_text,
+        sources: sourcesToRetry,
+      });
+    } catch (pythonErr) {
+      await db.query(
+        "UPDATE queries SET status = 'error' WHERE id = $1",
+        [jobId]
+      );
+      return res.status(502).json({
+        error: 'Failed to reach Python pipeline service',
+        jobId,
+      });
+    }
 
     return res.status(202).json({
       jobId,

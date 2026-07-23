@@ -1,0 +1,55 @@
+"""
+models/source_document.py — SQLAlchemy ORM models for source_documents and document_chunks.
+
+These mirror the tables defined in BackEnd/schema.sql. The Python service
+writes to these tables; the Node service reads them for report generation.
+
+NOTE: The existing schema.sql defines document_chunks.embedding as VECTOR(1536).
+This service uses all-MiniLM-L6-v2 (384 dims) for free/local embeddings.
+If migrating to this model, run:
+    ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(384);
+"""
+
+import uuid
+from datetime import datetime, timezone
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+
+from app.core.config import settings
+from app.core.database import Base
+
+
+class SourceDocument(Base):
+    """Raw fetched document — one per article/post/video per query."""
+
+    __tablename__ = "source_documents"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    query_id = Column(UUID(as_uuid=True), ForeignKey("queries.id", ondelete="CASCADE"), nullable=False)
+    source = Column(String(50), nullable=False)          # wikipedia | reddit | youtube | ...
+    author = Column(String(255), nullable=True)
+    text = Column(Text, nullable=False)
+    url = Column(Text, nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    engagement_metrics = Column(JSONB, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class DocumentChunk(Base):
+    """Chunked + embedded text for RAG retrieval."""
+
+    __tablename__ = "document_chunks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_document_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("source_documents.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # Denormalized from source_documents — avoids a join during retrieval.
+    query_id = Column(UUID(as_uuid=True), ForeignKey("queries.id", ondelete="CASCADE"), nullable=False)
+    chunk_text = Column(Text, nullable=False)
+    embedding = Column(Vector(settings.embedding_dimension))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
